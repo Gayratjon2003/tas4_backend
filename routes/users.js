@@ -6,8 +6,27 @@ const _ = require("lodash");
 const auth = require("../middleware/auth");
 
 router.get("/", auth, async (req, res) => {
-  const user = await User.find().select("-password");
-  res.send(user);
+  function decodeJWT(token) {
+    const parts = token.split(".");
+    if (parts.length !== 3) {
+      throw new Error("Invalid token format");
+    }
+    const header = JSON.parse(atob(parts[0]));
+    const payload = JSON.parse(atob(parts[1]));
+    return { header, payload };
+  }
+  let decoded = decodeJWT(req.header("x-auth-token"));
+  try {
+    const user = await User.findById(decoded.payload?._id).select("status");
+  if (user.status === "Blocked") {
+    return res.status(401).send("You're blocked");
+  }
+  } catch(err) {
+    return res.status(400).send("User not found");
+  }
+  
+  const users = await User.find().select("-password");
+  res.send(users);
 });
 
 router.post("/", async (req, res) => {
@@ -65,18 +84,7 @@ router.put("/:id", auth, async (req, res) => {
 router.delete("/:id", auth, async (req, res) => {
   try {
     let user = await User.findByIdAndRemove(req.params.id);
-    if (!user)
-      return res.status(404).send("ID not found");
-    res.send(user);
-  } catch (err) {
-    return res.status(404).send("ID not found");
-  }
-});
-router.get("/me/:id", auth, async (req, res) => {
-  try {
-    let user = await User.findById(req.params.id).select("-password");
-    if (!user)
-      return res.status(404).send("ID not found");
+    if (!user) return res.status(404).send("ID not found");
     res.send(user);
   } catch (err) {
     return res.status(404).send("ID not found");
