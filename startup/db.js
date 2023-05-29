@@ -4,7 +4,7 @@ const config = require("config");
 mongoose.set("strictQuery", false);
 module.exports = async function () {
   try {
-    await mongoose.connect(config.get("db"), {
+    await mongoose.connect(config.get("db"), { 
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });

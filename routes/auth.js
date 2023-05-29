@@ -30,8 +30,9 @@ router.post("/", async (req, res) => {
 
   res
     .header("x-auth-token", token)
-    .send({ text: "You are logged in", token: token });
+    .send({ text: "You are logged in", token: token, _id: user._id });
 });
+
 
 function validate(req) {
   const schema = {
